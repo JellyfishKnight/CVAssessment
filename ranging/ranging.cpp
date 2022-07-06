@@ -131,6 +131,7 @@ void Ranging::start(const RotatedRect& a, const RotatedRect& b, Mat& demo) {    
     //求解相机在世界坐标系中的坐标
     cameraPoint = -RMatrix.inverse() * TMatrix;
     //算出相机到装甲板中心的距离
+    /**这部分在某些时候距离仍然不准确,但是应该不是算法上的问题,目前估计是在视频画质方面的问题**/
     float tx, ty, tz;
     tx = tvecCamera2Obj.at<double>(0);
     ty = tvecCamera2Obj.at<double>(1);
@@ -139,14 +140,19 @@ void Ranging::start(const RotatedRect& a, const RotatedRect& b, Mat& demo) {    
     //在图上标出装甲板的距离
     putText(demo,"Dist:" + to_string(distObj2Camera).substr(0, 6), points[4], FONT_HERSHEY_SIMPLEX,2, Scalar(0,255,0),2);
 
-    /**以下关于欧拉角的解算问题比较大**/
-    float yaw, pitch;                                                //水平旋转角,俯仰角
+
+    float thetaY, thetaX, thetaZ;
     //根据旋转矩阵求出坐标旋转角
-//    yaw = atan2(rotRvec.at<double>(0, 2), rotRvec.at<double>(2, 2));
+    thetaX = atan2(rotRvec.at<double>(2,1), rotRvec.at<double>(2,2));
+    thetaY = atan2(-rotRvec.at<double>(2,0), sqrt(rotRvec.at<double>(2,1) * rotRvec.at<double>(2,1) + rotRvec.at<double>(2,2) * rotRvec.at<double>(2,2)));
+    thetaZ = atan2 (rotRvec.at<double>(1, 0), rotRvec.at<double>(0, 0));
+    //    yaw = atan2(rotRvec.at<double>(0, 2), rotRvec.at<double>(2, 2));
 //    pitch = asin(-rotRvec.at<double>(1, 2));
-//    yaw = yaw * 180.0 / CV_PI;                                       //从弧度转化为角度
-//    pitch = pitch * 180.0 / CV_PI;
+    thetaY = thetaY * 180.0 / CV_PI;                                       //从弧度转化为角度
+    thetaX = thetaX * 180.0 / CV_PI;
+    thetaZ = thetaZ * 180.0 / CV_PI;
 //    cout << rotRvec << endl;
-//    putText(demo, "yaw:" + to_string(yaw).substr(0, 4), points[1], FONT_HERSHEY_SIMPLEX, 1.5, Scalar(0,255,0), 2);
-//    putText(demo, "pitch:" + to_string(pitch).substr(0, 4), points[8], FONT_HERSHEY_SIMPLEX, 1.5, Scalar(0,255,0), 2);
+    putText(demo, "Y" + to_string(thetaY).substr(0, 4), points[1], FONT_HERSHEY_SIMPLEX, 1.5, Scalar(0, 0,255), 2);
+    putText(demo, "X:" + to_string(thetaX).substr(0, 4), points[8], FONT_HERSHEY_SIMPLEX, 1.5, Scalar(0,0,255), 2);
+    putText(demo, "Z:" + to_string(thetaZ).substr(0, 4), points[5], FONT_HERSHEY_SIMPLEX, 1.5, Scalar(0,0,255), 2);
 }
