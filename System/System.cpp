@@ -57,7 +57,6 @@ void System::ContoursFind(const Mat &frame) {
             selectedContours.push_back(allContours[i]);
         }
     }
-//    drawContours(demo, selectedContours, -1, Scalar(0, 255, 255), 10);
 }
 
 /*选择条件待优化,目前误识别依然存在*/
@@ -69,14 +68,6 @@ void System::RectFit() {
             allRects.push_back(fitEllipse(contour));
         }
     }
-//    for (const auto &rect: allRects) {
-//        Point2f corner[4];
-//        rect.points(corner);
-//        for (int i = 0; i < 4; i++) {
-//            line(demo, corner[i], corner[(i + 1) % 4], Scalar(0, 255 ,255), 10);
-//            cout << "drawing" << endl;
-//        }
-//    }
     for (int i = 0; i < allRects.size(); i++) {
         for (int j = i + 1; j < allRects.size(); j++) {
             float angleI, angleJ;
@@ -106,7 +97,6 @@ void System::RectFit() {
                         //两个矩形的中心点高度之差不能大
                         if (abs(allRects[i].center.y - allRects[j].center.y) <=
                             (allRects[i].size.height + allRects[j].size.height) / 4) {
-//                            cout  << angleI << " " << angleJ << endl;
                             Point2f point_i[4], point_j[4];
                             //得到两个矩形的角点
                             allRects[i].points(point_i);
@@ -131,6 +121,4 @@ void System::RectFit() {
                         }
         }
     }
-//    namedWindow("demo", WINDOW_NORMAL);
-//    imshow("demo", demo);
 }

@@ -109,14 +109,18 @@ void Ranging::caculateError(Mat& rvec, Mat& tvec) {                         /*调
 void Ranging::start(const RotatedRect& a, const RotatedRect& b, Mat& demo) {        /**相机姿态解算以及距离解算有问题**/
     //初始化
     init(a, b);
+
     //获取世界坐标系点
     vector<Point3f> objPoints = getObjPoints();
     vector<Point2f> imgPoints(points, points + 9);
+
     //solvePnP返回的旋转向量和平移向量
     Mat rvecCamera2Obj, tvecCamera2Obj;
     solvePnP(objPoints, imgPoints, cameraMatrix, disCoeffs, rvecCamera2Obj, tvecCamera2Obj);
+
     //计算重投影误差
     caculateError(rvecCamera2Obj, tvecCamera2Obj);
+
     Mat rotRvec;                                                    //将旋转向量转化为
     Rodrigues(rvecCamera2Obj, rotRvec);                     //旋转矩阵
     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> RMatrix;   //将opencv矩阵转化为Eigen的矩阵,方便矩阵运算
@@ -133,15 +137,16 @@ void Ranging::start(const RotatedRect& a, const RotatedRect& b, Mat& demo) {    
     tz = tvecCamera2Obj.at<double>(2);
     float distObj2Camera = sqrt(tx * tx + ty * ty + tz * tz);
     //在图上标出装甲板的距离
-    putText(demo,"Distance:" + to_string(distObj2Camera), points[0], FONT_HERSHEY_SIMPLEX,2, Scalar(0,255,0),2);
+    putText(demo,"Dist:" + to_string(distObj2Camera).substr(0, 6), points[4], FONT_HERSHEY_SIMPLEX,2, Scalar(0,255,0),2);
+
     /**以下关于欧拉角的解算问题比较大**/
-//    float yaw, pitch;                                                //水平旋转角,俯仰角
-//    //根据旋转矩阵求出坐标旋转角
-//    yaw = atan2(rotRvec.at<float>(2, 1), rotRvec.at<float>(2, 2));
-//    pitch = atan2(-rotRvec.at<float>(2, 0), sqrt(rotRvec.at<float>(2, 1) *
-//            rotRvec.at<float>(2, 1) + rotRvec.at<float>(2, 2) * rotRvec.at<float>(2, 2)));
+    float yaw, pitch;                                                //水平旋转角,俯仰角
+    //根据旋转矩阵求出坐标旋转角
+//    yaw = atan2(rotRvec.at<double>(0, 2), rotRvec.at<double>(2, 2));
+//    pitch = asin(-rotRvec.at<double>(1, 2));
 //    yaw = yaw * 180.0 / CV_PI;                                       //从弧度转化为角度
 //    pitch = pitch * 180.0 / CV_PI;
-//    cout << "yaw : " << yaw << endl;
-//    cout << "pitch : " << pitch << endl;
+//    cout << rotRvec << endl;
+//    putText(demo, "yaw:" + to_string(yaw).substr(0, 4), points[1], FONT_HERSHEY_SIMPLEX, 1.5, Scalar(0,255,0), 2);
+//    putText(demo, "pitch:" + to_string(pitch).substr(0, 4), points[8], FONT_HERSHEY_SIMPLEX, 1.5, Scalar(0,255,0), 2);
 }
