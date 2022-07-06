@@ -24,7 +24,9 @@ Mat PreProcess::start(Color color, Mat& input) {
     }
     delete [] channels;
     blurDst = demo.clone();
-    medianBlur(demo, blurDst, 5);       //中值模糊去除噪点
+    /*感觉两种模糊的效果差距不大*/
+//    medianBlur(demo, blurDst, 5);       //中值模糊去除噪点
+    GaussianBlur(demo, blurDst, Size(5, 5), 5);    //高斯模糊去噪点
     threshold(blurDst, binaryDst, 65, 255, THRESH_BINARY);
     Canny(binaryDst, edge, 35, 135);                   //可以考虑待改进
     namedWindow("Pre", WINDOW_NORMAL);

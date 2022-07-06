@@ -57,9 +57,10 @@ void Ranging::init(const RotatedRect& a, const RotatedRect& b) {            /*调
 //    imshow("test", test);
 }
 
-vector<Point3f> Ranging::getObjPoints() {
+vector<Point3f> Ranging::getObjPoints() {                                   /*调试完毕*/
     float maxRight = 0, minLeft = INFINITY, maxDown = 0, minUp = INFINITY;
-    for (int i = 0; i < 9; i++) {           //规范边界,防止数值越界
+    //规范边界,防止数值越界
+    for (int i = 0; i < 9; i++) {
         if (maxRight < points[i].x) {
             maxRight = points[i].x;
         }
@@ -88,7 +89,9 @@ vector<Point3f> Ranging::getObjPoints() {
     return objPoints;
 }
 
-void Ranging::caculateError() {                         /**有问题,目前估计是所给的相机内参平移矩阵和旋转矩阵不对**/
+
+
+void Ranging::caculateError() {                         /**由于缺乏标定的tvec和rvec,暂且无法计算误差**/
     vector<Point3f> objPoints = getObjPoints();
     vector<Point2f> outPutPoints;                       //3d到2d重投影
     projectPoints(objPoints, Mat::zeros(Size(3,1),CV_32F), Mat::zeros(Size(3, 1), CV_32F), Mat::zeros(Size(3,3), CV_32F), Mat::zeros(Size(5,1), CV_32F), outPutPoints);
@@ -106,31 +109,38 @@ void Ranging::caculateError() {                         /**有问题,目前估计是所给
     cout << "Average error is : " << totalError << endl;
 }
 
-void Ranging::start(const RotatedRect& a, const RotatedRect& b, Mat& demo) {            /**有问题,目前估计是所给的相机内参不对**/
-    init(a, b);                                                     //初始化
-    caculateError();                                                //计算重投影误差
-    vector<Point3f> objPoints = getObjPoints();                     //获取世界坐标系点
+void Ranging::start(const RotatedRect& a, const RotatedRect& b, Mat& demo) {        /**有问题,目前估计是所给的相机内参不对**/
+    //初始化
+    init(a, b);
+    //计算重投影误差(搁置)
+//    caculateError();
+    //获取世界坐标系点
+    vector<Point3f> objPoints = getObjPoints();
     vector<Point2f> imgPoints(points, points + 9);
+    //solvePnP返回的旋转向量和平移向量
     Mat rvecCamera2Obj, tvecCamera2Obj;
     solvePnP(objPoints, imgPoints, cameraMatrix, disCoeffs, rvecCamera2Obj, tvecCamera2Obj);
     Mat rotRvec;                                                    //将旋转向量转化为
     Rodrigues(rvecCamera2Obj, rotRvec);                     //旋转矩阵
-    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> RMatrix;   //将opencv矩阵转化为Eigen的矩阵
-    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> TMatrix;   //方便矩阵运算
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> RMatrix;   //将opencv矩阵转化为Eigen的矩阵,方便矩阵运算
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> TMatrix;
     cv2eigen(rotRvec, RMatrix);
     cv2eigen(tvecCamera2Obj, TMatrix);
     Eigen::Vector3f cameraPoint;
-    cameraPoint = -RMatrix.inverse() * TMatrix;                      //求解相机坐标
+    //求解相机在世界坐标系中的坐标
+    cameraPoint = -RMatrix.inverse() * TMatrix;
     float distObj2Camera = sqrt(pow(objPoints[0].x - cameraPoint.x(), 2) + pow(objPoints[0].y - cameraPoint.y(), 2) +
             pow(objPoints[0].z - cameraPoint.z(), 2));
-    cout << "装甲板中心到相机距离为: " << distObj2Camera << endl;
-    float yaw, pitch;                                                //水平旋转角,俯仰角
-    //根据旋转矩阵求出坐标旋转角
-    yaw = atan2(rotRvec.at<float>(2, 1), rotRvec.at<float>(2, 2));
-    pitch = atan2(-rotRvec.at<float>(2, 0), sqrt(rotRvec.at<float>(2, 1) *
-            rotRvec.at<float>(2, 1) + rotRvec.at<float>(2, 2) * rotRvec.at<float>(2, 2)));
-    yaw = yaw * 180.0 / CV_PI;                                       //从弧度转化为角度
-    pitch = pitch * 180.0 / CV_PI;
-    cout << "yaw : " << yaw << endl;
-    cout << "pitch : " << pitch << endl;
+    //在图上标出装甲板的距离
+    putText(demo,"Distance:" + to_string(distObj2Camera), points[0], FONT_HERSHEY_SIMPLEX,2, Scalar(0,255,0),2);
+    /**以下关于欧拉角的解算问题比较大**/
+//    float yaw, pitch;                                                //水平旋转角,俯仰角
+//    //根据旋转矩阵求出坐标旋转角
+//    yaw = atan2(rotRvec.at<float>(2, 1), rotRvec.at<float>(2, 2));
+//    pitch = atan2(-rotRvec.at<float>(2, 0), sqrt(rotRvec.at<float>(2, 1) *
+//            rotRvec.at<float>(2, 1) + rotRvec.at<float>(2, 2) * rotRvec.at<float>(2, 2)));
+//    yaw = yaw * 180.0 / CV_PI;                                       //从弧度转化为角度
+//    pitch = pitch * 180.0 / CV_PI;
+//    cout << "yaw : " << yaw << endl;
+//    cout << "pitch : " << pitch << endl;
 }
