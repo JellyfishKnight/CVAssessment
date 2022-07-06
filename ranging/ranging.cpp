@@ -113,7 +113,7 @@ void Ranging::start(const RotatedRect& a, const RotatedRect& b, Mat& demo) {    
     //初始化
     init(a, b);
     //计算重投影误差(搁置)
-//    caculateError();
+    caculateError();
     //获取世界坐标系点
     vector<Point3f> objPoints = getObjPoints();
     vector<Point2f> imgPoints(points, points + 9);
@@ -126,9 +126,12 @@ void Ranging::start(const RotatedRect& a, const RotatedRect& b, Mat& demo) {    
     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> TMatrix;
     cv2eigen(rotRvec, RMatrix);
     cv2eigen(tvecCamera2Obj, TMatrix);
+    cout << "R " << RMatrix << endl;
+    cout << "T " << TMatrix << endl;
     Eigen::Vector3f cameraPoint;
     //求解相机在世界坐标系中的坐标
-    cameraPoint = -RMatrix.inverse() * TMatrix;
+    cameraPoint = -RMatrix.transpose() * TMatrix;
+    cout << "C " << cameraPoint << endl;
     float distObj2Camera = sqrt(pow(objPoints[0].x - cameraPoint.x(), 2) + pow(objPoints[0].y - cameraPoint.y(), 2) +
             pow(objPoints[0].z - cameraPoint.z(), 2));
     //在图上标出装甲板的距离
