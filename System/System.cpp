@@ -36,7 +36,7 @@ void System::start() {
         cout << "------------------------------------------------" << endl;
         namedWindow("demo", WINDOW_NORMAL);
         imshow("demo", demo);
-        int control = waitKey(50);
+        int control = waitKey(1);
         if (control == 27) {
             break;
         }
@@ -60,9 +60,7 @@ void System::ContoursFind(const Mat &frame) {
 //    drawContours(demo, selectedContours, -1, Scalar(0, 255, 255), 10);
 }
 
-/* 选择条件待优化,目前误识别依然存在
- * 并且问题主要存在于机器人正面装甲板上面的横灯条上面
- * */
+/*选择条件待优化,目前误识别依然存在*/
 void System::RectFit() {
     allRects.clear();
     //使用椭圆拟合

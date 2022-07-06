@@ -7,7 +7,6 @@
 #include "Eigen/Eigen"
 #include "opencv2/core/eigen.hpp"
 #include "opencv2/core.hpp"
-#include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/calib3d.hpp"
 
@@ -76,12 +75,12 @@ vector<Point3f> Ranging::getObjPoints() {                                   /*调
     float imageHeight = maxDown - minUp;
     vector<Point3f> objPoints;
     Point3f temp(0, 0, 0);
-    temp.x = abs((points[0].x - points[1].x) / imageWidth * boardWidth);
-    temp.y = abs((points[0].y - points[1].y) / imageHeight * boardHeight);
+//    temp.x = abs((points[0].x - points[1].x) / imageWidth * boardWidth);
+//    temp.y = abs((points[0].y - points[1].y) / imageHeight * boardHeight);
     objPoints.push_back(temp);
     for (int i = 1; i < 9; i++) {
-        temp.x = abs((points[i].x - points[1].x) / imageWidth * boardWidth);
-        temp.y = abs((points[i].y - points[1].y) / imageHeight * boardHeight);
+        temp.x = (points[i].x - points[0].x) / imageWidth * boardWidth;
+        temp.y = (points[i].y - points[0].y) / imageHeight * boardHeight;
         objPoints.push_back(temp);
     }
     return objPoints;
@@ -126,10 +125,13 @@ void Ranging::start(const RotatedRect& a, const RotatedRect& b, Mat& demo) {    
     cv2eigen(tvecCamera2Obj, TMatrix);
     Eigen::Vector3f cameraPoint;
     //求解相机在世界坐标系中的坐标
-    /**距离解算依然存在较大问题**/
     cameraPoint = -RMatrix.inverse() * TMatrix;
-    float distObj2Camera = sqrt(pow(objPoints[0].x - cameraPoint.x(), 2) + pow(objPoints[0].y - cameraPoint.y(), 2) +
-            pow(objPoints[0].z - cameraPoint.z(), 2));
+    //算出相机到装甲板中心的距离
+    float tx, ty, tz;
+    tx = tvecCamera2Obj.at<double>(0);
+    ty = tvecCamera2Obj.at<double>(1);
+    tz = tvecCamera2Obj.at<double>(2);
+    float distObj2Camera = sqrt(tx * tx + ty * ty + tz * tz);
     //在图上标出装甲板的距离
     putText(demo,"Distance:" + to_string(distObj2Camera), points[0], FONT_HERSHEY_SIMPLEX,2, Scalar(0,255,0),2);
     /**以下关于欧拉角的解算问题比较大**/
