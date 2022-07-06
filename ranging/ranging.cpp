@@ -22,8 +22,6 @@ void Ranging::init(const RotatedRect& a, const RotatedRect& b) {            /*调
             0, 0, 1);
     disCoeffs = (Mat_<float>(1, 5) << -0.06550846603470172, 0.06305921474841766, 9.789393321568021e-05,
             0.001037227953363168, 0.411048839130545);
-    tvec = (Mat_<float>(3,1) << -0.3522639588878179, 0.9168128819622311, 2.937699843010718);
-    rvec = (Mat_<float>(3,1) << 85.87077107541373, 85.0288547599849, 407.6141377633821);
     Point2f pointA[4], pointB[4];
     a.points(pointA);
     b.points(pointB);
@@ -91,11 +89,11 @@ vector<Point3f> Ranging::getObjPoints() {                                   /*调
 
 
 
-void Ranging::caculateError() {                         /**由于缺乏标定的tvec和rvec,暂且无法计算误差**/
+void Ranging::caculateError(Mat& rvec, Mat& tvec) {                         /*调试完毕*/
     vector<Point3f> objPoints = getObjPoints();
     vector<Point2f> outPutPoints;                       //3d到2d重投影
-    projectPoints(objPoints, Mat::zeros(Size(3,1),CV_32F), Mat::zeros(Size(3, 1), CV_32F), Mat::zeros(Size(3,3), CV_32F), Mat::zeros(Size(5,1), CV_32F), outPutPoints);
-//    Mat test = Mat::zeros(Size(200,200), CV_8UC1);
+    projectPoints(objPoints, rvec, tvec , cameraMatrix, disCoeffs, outPutPoints);
+    Mat test = Mat::zeros(Size(2000,2000), CV_8UC1);
 //    for (int i = 0; i < outPutPoints.size(); i++) {
 //        putText(test, to_string(i), outPutPoints[i], FONT_HERSHEY_SIMPLEX, 2, Scalar(255,255,255),2);
 //    }
@@ -109,29 +107,27 @@ void Ranging::caculateError() {                         /**由于缺乏标定的tvec和r
     cout << "Average error is : " << totalError << endl;
 }
 
-void Ranging::start(const RotatedRect& a, const RotatedRect& b, Mat& demo) {        /**有问题,目前估计是所给的相机内参不对**/
+void Ranging::start(const RotatedRect& a, const RotatedRect& b, Mat& demo) {        /**相机姿态解算以及距离解算有问题**/
     //初始化
     init(a, b);
-    //计算重投影误差(搁置)
-    caculateError();
     //获取世界坐标系点
     vector<Point3f> objPoints = getObjPoints();
     vector<Point2f> imgPoints(points, points + 9);
     //solvePnP返回的旋转向量和平移向量
     Mat rvecCamera2Obj, tvecCamera2Obj;
     solvePnP(objPoints, imgPoints, cameraMatrix, disCoeffs, rvecCamera2Obj, tvecCamera2Obj);
+    //计算重投影误差
+    caculateError(rvecCamera2Obj, tvecCamera2Obj);
     Mat rotRvec;                                                    //将旋转向量转化为
     Rodrigues(rvecCamera2Obj, rotRvec);                     //旋转矩阵
     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> RMatrix;   //将opencv矩阵转化为Eigen的矩阵,方便矩阵运算
     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> TMatrix;
     cv2eigen(rotRvec, RMatrix);
     cv2eigen(tvecCamera2Obj, TMatrix);
-    cout << "R " << RMatrix << endl;
-    cout << "T " << TMatrix << endl;
     Eigen::Vector3f cameraPoint;
     //求解相机在世界坐标系中的坐标
-    cameraPoint = -RMatrix.transpose() * TMatrix;
-    cout << "C " << cameraPoint << endl;
+    /**距离解算依然存在较大问题**/
+    cameraPoint = -RMatrix.inverse() * TMatrix;
     float distObj2Camera = sqrt(pow(objPoints[0].x - cameraPoint.x(), 2) + pow(objPoints[0].y - cameraPoint.y(), 2) +
             pow(objPoints[0].z - cameraPoint.z(), 2));
     //在图上标出装甲板的距离

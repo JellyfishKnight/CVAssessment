@@ -17,10 +17,6 @@ private:
     Mat cameraMatrix;
     //畸变矩阵
     Mat disCoeffs;
-    //平移矩阵
-    Mat tvec;
-    //旋转矩阵
-    Mat rvec;
     //装甲板灯条的点以及中心点
     Point2f *points;
     //装甲板的实际宽度和高度
@@ -38,7 +34,7 @@ private:
     /**
      * @brief 误差计算
      */
-    void caculateError();
+    void caculateError(Mat& rvec, Mat& tvec);
 
 public:
     /**
