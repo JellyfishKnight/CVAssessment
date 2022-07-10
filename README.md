@@ -21,10 +21,10 @@
 > 
 > (3) **基本上正确部分的效果图如下**
 >
-> ![](https://github.com/JellyfishKnight/CVAssessment/tree/main/image/image1.jpg)
+> ![](https://github.com/JellyfishKnight/CVAssessment/blob/main/image/image1.jpg)
 >
 > (4) **误差较大的效果图如下**
 > 
-> ![](https://github.com/JellyfishKnight/CVAssessment/tree/main/image/image2.jpg)
+> ![](https://github.com/JellyfishKnight/CVAssessment/blob/main/image/image2.jpg)
 ***
 **特别鸣谢:东南大学2019年的视觉开源提供了装甲板筛选思路**
